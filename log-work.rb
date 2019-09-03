@@ -1,11 +1,15 @@
-require_relative 'base.rb'
+#!/usr/bin/env ruby
+
+require_relative 'base'
+
+def format_time(year, month, day, hour, minute = 0)
+  Time.new(year, month, day, hour, minute).iso8601(3).sub(/(.*):/, '\1')
+end
 
 def log_work(issue, started, timeSpent)
 
-  uri = URI("#{JIRA_BASE_URI}/rest/api/2/issue/#{issue}/worklog")
+  uri = URI("#{JIRA_BASE_URI}/rest/api/3/issue/#{issue}/worklog?notifyUsers=false")
   req = Net::HTTP::Post.new(uri, 'content-type': 'application/json')
-  #uri = URI("#{JIRA_BASE_URI}/rest/api/2/issue/#{issue}?fields=summary")
-  #req = Net::HTTP::Get.new(uri)
 
   req.basic_auth LOGIN_INFO[:username], LOGIN_INFO[:api_key]
 
@@ -16,9 +20,11 @@ def log_work(issue, started, timeSpent)
 
   http = Net::HTTP.new(uri.hostname, uri.port)
   http.use_ssl = true
-  http.set_debug_output $stdout
+  # http.set_debug_output $stdout
   res = http.request(req)
   JSON.parse res.body
 end
 
-p log_work "LIO-11750", Date.today.iso8601, "1h"
+date = format_time(2019, 9, 3, 8)
+p log_work "LIO-12127", date, "1h"
+# "2019-09-03T08:37:20.972-0300"

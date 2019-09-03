@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 
-require 'date'
+require_relative 'base'
 
-projects_folder = ENV['HOME'] + '/dev/lio/projects'
+PROJECTS_FOLDER = ENV['HOME'] + '/dev/lio/projects'
+
 
 def date_formatted(date)
   date.strftime('%Y-%m-%d')
@@ -14,26 +15,31 @@ def parse_commit_line(line)
   { date: m[1], issue: m[2] }
 end
 
-today = date_formatted(Date.today)
-last_month = date_formatted(Date.today - 30)
+def my_issues(start_date, end_date)
+  issues = []
 
-issues = []
+  projects = %x[find #{PROJECTS_FOLDER} -name '.git' -type d].split.map { |d| File.dirname(d) }
+  projects.each do |path|
+    # puts path
+    Dir.chdir path
+    name = %x[git config user.name]
+    lines = %x[git log --date=iso --format="%ad %s" --all --after="#{start_date}" --until="#{end_date}" --author="#{name}"].split("\n")
+    lines
+      .map { |l| parse_commit_line(l) }
+      .compact
+      .reject { |i| i[:issue].match?(/(LIO-0+)/)  }
+      .each { |i| issues.push i }
+  end
 
-
-projects = %x[find #{projects_folder} -name '.git' -type d].split.map { |d| File.dirname(d) }
-projects.each do |path|
-  # puts path
-  Dir.chdir path
-  name = %x[git config user.name]
-  lines = %x[git log --date=iso --format="%ad %s" --all --after="#{last_month}" --until="#{today}" --author="#{name}"].split("\n")
-  lines
-    .map { |l| parse_commit_line(l) }
-    .compact
-    .reject { |i| i[:issue].match?(/(LIO-0+)/)  }
-    .each { |i| issues.push i }
+  issues
+    .sort { |a, b| b[:date] <=> a[:date]  }
+    .map { |i| i[:issue] }
+    .uniq
 end
 
-puts issues
-  .sort { |a, b| b[:date] <=> a[:date]  }
-  .map { |i| i[:issue] }
-  .uniq
+if __FILE__ == $0
+  today = date_formatted(Date.today)
+  last_month = date_formatted(Date.today - 30)
+
+  puts my_issues last_month, today
+end
