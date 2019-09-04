@@ -2,8 +2,8 @@
 
 require_relative 'base'
 
-def format_time(year, month, day, hour, minute = 0)
-  Time.new(year, month, day, hour, minute).iso8601(3).sub(/(.*):/, '\1')
+def format_time(time_str)
+  Time.parse(time_str).iso8601(3).sub(/(.*):/, '\1')
 end
 
 def log_work(issue, started, timeSpent)
@@ -11,10 +11,10 @@ def log_work(issue, started, timeSpent)
   uri = URI("#{JIRA_BASE_URI}/rest/api/3/issue/#{issue}/worklog?notifyUsers=false")
   req = Net::HTTP::Post.new(uri, 'content-type': 'application/json')
 
-  req.basic_auth LOGIN_INFO[:username], LOGIN_INFO[:api_key]
+  req.basic_auth CONFIG[:atlassian_username], CONFIG[:atlassian_api_token]
 
   req.body = {
-    started: started,
+    started: format_time(started),
     timeSpent: timeSpent
   }.to_json
 
@@ -25,6 +25,11 @@ def log_work(issue, started, timeSpent)
   JSON.parse res.body
 end
 
-date = format_time(2019, 9, 3, 8)
-p log_work "LIO-12127", date, "1h"
-# "2019-09-03T08:37:20.972-0300"
+return unless __FILE__ == $0
+
+# ./log-work.rb LIO-12127 '2019-09-01 10:00' 1h
+issue = ARGV[0]
+time_str = ARGV[1]
+worked = ARGV[2]
+
+puts log_work issue, time_str, worked

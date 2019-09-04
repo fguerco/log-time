@@ -2,10 +2,7 @@
 
 require_relative 'base'
 
-PROJECTS_FOLDER = ENV['HOME'] + '/dev/lio/projects'
-
-
-def date_formatted(date)
+def format_date(date)
   date.strftime('%Y-%m-%d')
 end
 
@@ -15,15 +12,17 @@ def parse_commit_line(line)
   { date: m[1], issue: m[2] }
 end
 
-def my_issues(start_date, end_date)
+def my_issues(year, month)
   issues = []
 
-  projects = %x[find #{PROJECTS_FOLDER} -name '.git' -type d].split.map { |d| File.dirname(d) }
+  start_date = Date.new(year, month, 1)
+  end_date = Date.new(year, month, -1)
+
+  projects = %x[find #{CONFIG[:projects_dir]} -name '.git' -type d].split.map { |d| File.dirname(d) }
   projects.each do |path|
-    # puts path
     Dir.chdir path
     name = %x[git config user.name]
-    lines = %x[git log --date=iso --format="%ad %s" --all --after="#{start_date}" --until="#{end_date}" --author="#{name}"].split("\n")
+    lines = %x[git log --date=iso --format="%ad %s" --all --after="#{format_date(start_date)}" --until="#{format_date(end_date)}" --author="#{name}"].split("\n")
     lines
       .map { |l| parse_commit_line(l) }
       .compact
@@ -37,9 +36,10 @@ def my_issues(start_date, end_date)
     .uniq
 end
 
-if __FILE__ == $0
-  today = date_formatted(Date.today)
-  last_month = date_formatted(Date.today - 30)
+return unless __FILE__ == $0
 
-  puts my_issues last_month, today
+begin
+  p my_issues ARGV[0].to_i, ARGV[1].to_i
+rescue
+  puts "Usage: #{$0} year month"
 end

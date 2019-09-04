@@ -6,4 +6,4 @@ require 'time'
 
 JIRA_BASE_URI = "https://m4uservicosdigitais.atlassian.net"
 
-LOGIN_INFO = JSON.parse(File.read(ENV['HOME'] + '/.atlassian/config.json'), symbolize_names: true)
+CONFIG = JSON.parse(File.read(__dir__ + '/config.json'), symbolize_names: true)
