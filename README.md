@@ -10,7 +10,8 @@ First create a file named **config.json**
     {
       "username": "usually your email",
       "api_token": "your api token",
-      "projects_dir": "/your/projects/dir"
+      "projects_dir": "/your/projects/dir",
+      "production": false
     }
 
 ## Running
