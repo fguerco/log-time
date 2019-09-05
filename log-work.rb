@@ -8,6 +8,9 @@ end
 
 def log_work(issue, started, timeSpent)
 
+  puts " > Logging #{timeSpent} of work on Issue #{issue} on #{started}"
+  return unless CONFIG[:production] == true
+
   uri = URI("#{JIRA_BASE_URI}/rest/api/3/issue/#{issue}/worklog?notifyUsers=false")
   req = Net::HTTP::Post.new(uri, 'content-type': 'application/json')
 
