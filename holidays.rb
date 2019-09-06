@@ -1,34 +1,41 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require_relative 'base'
 
-HOLIDAYS_CACHE = {}
+@holidays_cache = {}
 
-# HOLIDAYS_ENDPOINT = "https://api.calendario.com.br/?json=true&ano=#{year}&ibge=3304557&token=#{CONFIG[:calendar_api_token]}"
+def load_file(year)
+  data = File.read("#{__dir__}/holidays/#{year}.json")
+  JSON.parse(data, symbolize_names: true)
+end
 
 def holidays_by_year(year)
-  return HOLIDAYS_CACHE[year] unless HOLIDAYS_CACHE[year].nil?
+  return @holidays_cache[year] unless @holidays_cache[year].nil?
 
-  HOLIDAYS_CACHE[year] = JSON.parse(File.read("#{__dir__}/holidays/#{year}.json"), symbolize_names: true)
+  puts 'No cache available, reading file'
+  @holidays_cache[year] =
+    load_file(year)
     .map { |d| Date.strptime d[:date], '%d/%m/%Y' }
     .uniq
 end
 
 def holidays_by_month(year, month)
   key = "#{year}_#{month}"
-  return HOLIDAYS_CACHE[key] unless HOLIDAYS_CACHE[key].nil?
-  HOLIDAYS_CACHE[key] = holidays_by_year(year).select { |d| d.month == month }
+  return @holidays_cache[key] unless @holidays_cache[key].nil?
+
+  @holidays_cache[key] = holidays_by_year(year).select { |d| d.month == month }
 end
 
-def is_holiday?(date)
+def holiday?(date)
   holidays_by_month(date.year, date.month).include? date
 end
 
-return unless __FILE__ == $0
+return unless $PROGRAM_NAME == __FILE__
 
 begin
   p holidays_by_month ARGV[0].to_i, ARGV[1].to_i
-  puts "Is today a holiday? #{is_holiday?(Date.today)}"
-rescue
-  puts "Usage: #{$0} year month"
+  puts "Is today a holiday? #{holiday?(Date.today)}"
+rescue StandardError
+  puts "Usage: #{$PROGRAM_NAME} year month"
 end

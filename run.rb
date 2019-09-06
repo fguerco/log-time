@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require_relative 'my-issues'
 require_relative 'log-work'
@@ -31,26 +32,27 @@ work_days = work_days(year, month)
 issues_per_day = (issues_worked.size / work_days.size.to_f).floor(1)
 
 HOURS_PER_DAY = 8
-HOURS_PER_ISSUE = (HOURS_PER_DAY / issues_per_day).ceil
 STARTING_HOUR = 9
+MIN_HOURS_PER_ISSUE = HOURS_PER_DAY / 2
+HOURS_PER_ISSUE = [(HOURS_PER_DAY / issues_per_day).ceil, MIN_HOURS_PER_ISSUE].max
 
 puts "issues to log: #{issues_worked.size}"
 puts "work days: #{work_days.size}"
 puts "hours per issue: #{HOURS_PER_ISSUE}"
 
 issues_to_log = issues_worked
-  .map do |i|
-    {
-      issue: i,
-      hours_left: HOURS_PER_ISSUE
-    }
-  end
+                .map do |i|
+  {
+    issue: i,
+    hours_left: HOURS_PER_ISSUE
+  }
+end
 
 next_issue = issues_to_log.shift
 
 filtered_days =
   work_days
-  .reject { |d| except.include?(d.day.to_s)  }
+  .reject { |d| except.include?(d.day.to_s) }
   .select { |d| only.empty? || only.include?(d.day.to_s) }
 
 filtered_days.each do |d|
@@ -73,7 +75,6 @@ filtered_days.each do |d|
     log_work(next_issue[:issue], date_log.to_s, "#{hours}h")
     logged += hours
 
-    next_issue = issues_to_log.shift if next_issue[:hours_left] == 0
+    next_issue = issues_to_log.shift if next_issue[:hours_left].zero?
   end
-
 end

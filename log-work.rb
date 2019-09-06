@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require_relative 'base'
 
@@ -6,9 +7,16 @@ def format_time(time_str)
   Time.parse(time_str).iso8601(3).sub(/(.*):/, '\1')
 end
 
-def log_work(issue, started, timeSpent)
+def send_request(uri, req)
+  http = Net::HTTP.new(uri.hostname, uri.port)
+  http.use_ssl = true
+  # http.set_debug_output $stdout
+  res = http.request(req)
+  JSON.parse res.body
+end
 
-  puts " > Logging #{timeSpent} of work on Issue #{issue} on #{started}"
+def log_work(issue, started, time_spent)
+  puts " > Logging #{time_spent} of work on Issue #{issue} on #{started}"
   return unless CONFIG[:production] == true
 
   uri = URI("#{JIRA_BASE_URI}/rest/api/3/issue/#{issue}/worklog?notifyUsers=false")
@@ -18,17 +26,13 @@ def log_work(issue, started, timeSpent)
 
   req.body = {
     started: format_time(started),
-    timeSpent: timeSpent
+    timeSpent: time_spent
   }.to_json
 
-  http = Net::HTTP.new(uri.hostname, uri.port)
-  http.use_ssl = true
-  # http.set_debug_output $stdout
-  res = http.request(req)
-  JSON.parse res.body
+  send_request uri, req
 end
 
-return unless __FILE__ == $0
+return unless $PROGRAM_NAME == __FILE__
 
 # ./log-work.rb LIO-12127 '2019-09-01 10:00' 1h
 issue = ARGV[0]
