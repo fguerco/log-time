@@ -21,6 +21,6 @@ First create a file named **config.json**
 
     ./run.rb -y year -m month
 
-    to a complete list of parameters run ./run.rb -h
+to a complete list of parameters run ./run.rb -h
 
 ## Thank you!
