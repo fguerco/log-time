@@ -15,9 +15,9 @@ def send_request(uri, req)
   JSON.parse res.body
 end
 
-def log_work(issue, started, time_spent)
+def log_work(issue, started, time_spent, production)
   puts " > Logging #{time_spent} of work on Issue #{issue} on #{started}"
-  return unless CONFIG[:production] == true
+  return unless production
 
   uri = URI("#{JIRA_BASE_URI}/rest/api/3/issue/#{issue}/worklog?notifyUsers=false")
   req = Net::HTTP::Post.new(uri, 'content-type': 'application/json')
@@ -38,5 +38,6 @@ return unless $PROGRAM_NAME == __FILE__
 issue = ARGV[0]
 time_str = ARGV[1]
 worked = ARGV[2]
+production = ARGV[3].to_s.downcase == true
 
-puts log_work issue, time_str, worked
+puts log_work issue, time_str, worked, production

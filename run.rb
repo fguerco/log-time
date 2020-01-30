@@ -4,25 +4,47 @@
 require_relative 'my-issues'
 require_relative 'log-work'
 require_relative 'days'
+require 'slop'
 
-year = ARGV[0].to_i
-month = ARGV[1].to_i
-extras = ARGV[2]
+opts = Slop.parse do |o|
+  o.integer '-y', '--year', 'Year of work done. Mandatory'
+  o.integer '-m', '--month', 'Month of work done. Mandatory'
+  o.string '-o', '--only', 'Only specified days - comma separated. Optional'
+  o.string '-e', '--except', 'Except specified days - comma separated. Optional'
+  o.bool '-p', '--production', 'Run in production mode. Will only update work log if set. Optional', default: false
+  o.bool '-h', '--help', 'Show help'
+end
 
-puts extras
+year = opts[:year]
+month = opts[:month]
+production = opts.production?
+
+def show_help?(opts)
+  opts.help? || opts[:year].nil? || opts[:month].nil?
+end
+
+if show_help?(opts)
+  puts opts
+  exit
+end
+
+if production
+  print 'Running in production mode. This program will register work logs. Continue (y/N)? '
+  r = STDIN.gets.chomp
+  exit unless r.downcase == 'y'
+else
+  puts 'Not running in production mode. This program will only show what will be done. '\
+    'To run in production mode add -p argument'
+end
 
 only = []
 except = []
 
-unless extras.nil?
-  sep = extras.split('=')
-  rule = sep[0]
-  data = sep[1]
-
-  if rule == 'only'
-    only.push(*data.split(','))
-  elsif rule == 'except'
-    except.push(*data.split(','))
+unless opts[:only].nil? && opts[:except].nil?
+  if opts[:only].nil?
+    except.push(*opts[:except].split(','))
+  else
+    only.push(*opts[:only].split(','))
   end
 end
 
@@ -72,7 +94,7 @@ filtered_days.each do |d|
     date_log = Time.new(d.year, d.month, d.day, STARTING_HOUR + logged, minute)
     minute += 10
 
-    log_work(next_issue[:issue], date_log.to_s, "#{hours}h")
+    log_work(next_issue[:issue], date_log.to_s, "#{hours}h", production)
     logged += hours
 
     next_issue = issues_to_log.shift if next_issue[:hours_left].zero?
