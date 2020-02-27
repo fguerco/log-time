@@ -11,6 +11,7 @@ opts = Slop.parse do |o|
   o.integer '-m', '--month', 'Month of work done. Mandatory'
   o.string '-o', '--only', 'Only specified days - comma separated. Optional'
   o.string '-e', '--except', 'Except specified days - comma separated. Optional'
+  o.string '-i', '--issues', 'Use specified issues instead of project repositories'
   o.bool '-p', '--production', 'Run in production mode. Will only update work log if set. Optional', default: false
   o.bool '-h', '--help', 'Show help'
 end
@@ -28,6 +29,10 @@ if show_help?(opts)
   exit
 end
 
+def arg_as_array(arg)
+  arg.nil? ? [] : arg.split(',')
+end
+
 if production
   print 'Running in production mode. This program will register work logs. Continue (y/N)? '
   r = STDIN.gets.chomp
@@ -37,21 +42,15 @@ else
     'To run in production mode add -p argument'
 end
 
-only = []
-except = []
+only = arg_as_array(opts[:only])
+except = only.any? ? [] : arg_as_array(opts[:except])
+issues = arg_as_array(opts[:issues])
 
-unless opts[:only].nil? && opts[:except].nil?
-  if opts[:only].nil?
-    except.push(*opts[:except].split(','))
-  else
-    only.push(*opts[:only].split(','))
-  end
-end
-
-issues_worked = my_issues(year, month)
+issues_worked = issues.empty? ? my_issues(year, month) : issues
 work_days = work_days(year, month)
 
 issues_per_day = (issues_worked.size / work_days.size.to_f).floor(1)
+issues_per_day = 1 if issues_per_day == 0 && issues_worked.size == 1
 
 HOURS_PER_DAY = 8
 STARTING_HOUR = 9
