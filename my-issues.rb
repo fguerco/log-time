@@ -15,7 +15,7 @@ def parse_commit_line(line)
 end
 
 def commits_from_repository(start_date, end_date)
-  name = `git config user.name`
+  name = `git config user.name`.chomp
   `git log \
      --date=iso \
      --format="%ad %s" \
