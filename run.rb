@@ -40,7 +40,7 @@ if production
 else
   puts 'Not running in production mode. This program will only show what will be done. '\
     'To run in production mode execute:', '',
-    "#{$0} -p #{ARGV.join(' ')}", ''
+       "#{$PROGRAM_NAME} -p #{ARGV.join(' ')}", ''
 end
 
 only = arg_as_array(opts[:only])
@@ -55,15 +55,15 @@ filtered_days =
   .reject { |d| except.include?(d.day.to_s) }
   .select { |d| only.empty? || only.include?(d.day.to_s) }
 
-
 issues_per_day = (issues_worked.size / work_days.size.to_f).floor(1).to_i
-issues_per_day = issues_worked.size if issues_per_day == 0
+issues_per_day = issues_worked.size if issues_per_day.zero?
 
 HOURS_PER_DAY = 8
 STARTING_HOUR = 9
 TOTAL_HOURS = HOURS_PER_DAY * filtered_days.size
+HOURS_PER_ISSUE_WORKED = (TOTAL_HOURS / issues_worked.size.to_f).ceil
 MIN_HOURS_PER_ISSUE = HOURS_PER_DAY / 2
-HOURS_PER_ISSUE = [(HOURS_PER_DAY / issues_per_day).ceil, MIN_HOURS_PER_ISSUE, (TOTAL_HOURS / issues_worked.size.to_f).ceil].max
+HOURS_PER_ISSUE = [(HOURS_PER_DAY / issues_per_day).ceil, MIN_HOURS_PER_ISSUE, HOURS_PER_ISSUE_WORKED].max
 
 puts "issues to log: #{issues_worked.size}"
 puts "days to log: #{filtered_days.size}"
