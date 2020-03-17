@@ -39,7 +39,8 @@ if production
   exit unless r.downcase == 'y'
 else
   puts 'Not running in production mode. This program will only show what will be done. '\
-    'To run in production mode add -p argument'
+    'To run in production mode execute:', '',
+    "#{$0} -p #{ARGV.join(' ')}", ''
 end
 
 only = arg_as_array(opts[:only])
@@ -49,16 +50,23 @@ issues = arg_as_array(opts[:issues])
 issues_worked = issues.empty? ? my_issues(year, month) : issues
 work_days = work_days(year, month)
 
-issues_per_day = (issues_worked.size / work_days.size.to_f).floor(1)
-issues_per_day = 1 if issues_per_day == 0 && issues_worked.size == 1
+filtered_days =
+  work_days
+  .reject { |d| except.include?(d.day.to_s) }
+  .select { |d| only.empty? || only.include?(d.day.to_s) }
+
+
+issues_per_day = (issues_worked.size / work_days.size.to_f).floor(1).to_i
+issues_per_day = issues_worked.size if issues_per_day == 0
 
 HOURS_PER_DAY = 8
 STARTING_HOUR = 9
+TOTAL_HOURS = HOURS_PER_DAY * filtered_days.size
 MIN_HOURS_PER_ISSUE = HOURS_PER_DAY / 2
-HOURS_PER_ISSUE = [(HOURS_PER_DAY / issues_per_day).ceil, MIN_HOURS_PER_ISSUE].max
+HOURS_PER_ISSUE = [(HOURS_PER_DAY / issues_per_day).ceil, MIN_HOURS_PER_ISSUE, (TOTAL_HOURS / issues_worked.size.to_f).ceil].max
 
 puts "issues to log: #{issues_worked.size}"
-puts "work days: #{work_days.size}"
+puts "days to log: #{filtered_days.size}"
 puts "hours per issue: #{HOURS_PER_ISSUE}"
 
 issues_to_log = issues_worked
@@ -70,11 +78,6 @@ issues_to_log = issues_worked
 end
 
 next_issue = issues_to_log.shift
-
-filtered_days =
-  work_days
-  .reject { |d| except.include?(d.day.to_s) }
-  .select { |d| only.empty? || only.include?(d.day.to_s) }
 
 filtered_days.each do |d|
   puts "\n", '-' * 80, "Logging work for #{d}:"
