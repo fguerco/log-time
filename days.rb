@@ -8,7 +8,7 @@ def work_days(year, month)
   end_date = Date.new(year, month, -1)
 
   start_date.upto(end_date)
-          .reject { |d| d.sunday? || d.saturday? || holiday?(d) }
+            .reject { |d| d.sunday? || d.saturday? || holiday?(d) }
 end
 
 return unless $PROGRAM_NAME == __FILE__
