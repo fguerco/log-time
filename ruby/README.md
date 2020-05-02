@@ -12,8 +12,8 @@ Hi! With this project you can log your work automatically on JIRA based on your 
 First create a file named **config.json**
 
     {
-      "username": "usually your email",
-      "api_token": "your api token",
+      "atlassian_username": "usually your email",
+      "atlassian_api_token": "your api token",
       "projects_dir": "/your/projects/dir"
     }
 
